@@ -1,2 +1,18 @@
 .DS_Store
-node_modules
+**/.DS_Store
+node_modules/
+
+# Non-deploy working files
+work/tmp/*
+!work/tmp/.gitkeep
+work/images-source/*
+!work/images-source/.gitkeep
+
+# Sensitive host/archive artifacts (keep archive content, but ignore logs/dumps)
+archive/host-logs/
+archive/**/*.log
+archive/**/*.out
+archive/**/*.err
+archive/**/*.zip
+archive/**/*.tar
+archive/**/*.tar.gz
