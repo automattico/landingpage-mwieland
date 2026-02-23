@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mwieland.com/sitemap.xml

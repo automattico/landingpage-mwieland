@@ -10,7 +10,10 @@ Deploy target is the **contents of `public/`**.
    - Upload these paths:
      - `public/index.html`
      - `public/legal-notice.html`
+     - `public/legal-notice/`
      - `public/site.webmanifest`
+     - `public/robots.txt`
+     - `public/sitemap.xml`
      - `public/favicon.ico`
      - `public/css/`
      - `public/images/`
@@ -33,6 +36,9 @@ Open and hard-refresh these URLs:
 3. `https://mwieland.com/site.webmanifest`
 4. `https://mwieland.com/images/avatar-320.jpg`
 5. `https://mwieland.com/images/favicon-32x32.png`
+6. `https://mwieland.com/robots.txt`
+7. `https://mwieland.com/sitemap.xml`
+8. `https://mwieland.com/legal-notice/`
 
 Check:
 
