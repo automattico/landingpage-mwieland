@@ -54,6 +54,7 @@ SECRET_ALLOWLIST = {
     "'your-sftp-password'",
 }
 DISALLOWED_PUBLIC_NAMES = {
+    ".ds_store",
     ".env",
     ".env.local",
     ".env.production",

@@ -100,6 +100,7 @@ lftp <<EOF
 set cmd:fail-exit true
 set xfer:clobber true
 set sftp:auto-confirm yes
+set mirror:exclude-regex "(^|/)\\.DS_Store$"
 $LFTP_OPEN_COMMAND
 mirror --reverse --delete --verbose "$LFTP_SOURCE_DIR" "$LFTP_TARGET_DIR"
 bye
