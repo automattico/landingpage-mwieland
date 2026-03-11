@@ -1,65 +1,13 @@
-name: Validate Public Site
+name: CI Gate
 
 on:
   push:
   pull_request:
 
 jobs:
-  validate:
+  prod-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate required deploy files
-        run: |
-          test -f public/index.html
-          test -f public/legal-notice.html
-          test -f public/site.webmanifest
-          test -f public/css/styles.css
-          test -f public/images/bg2022.jpg
-          test -f public/images/avatar-320.jpg
-          test -f public/images/favicon-32x32.png
-
-      - name: Validate local references under public
-        run: |
-          python3 - <<'PY'
-          import json
-          import pathlib
-          import re
-
-          root = pathlib.Path("public")
-          missing = []
-
-          html_files = [root / "index.html", root / "legal-notice.html"]
-          css_file = root / "css" / "styles.css"
-          manifest_file = root / "site.webmanifest"
-
-          attr_re = re.compile(r'(?:href|src)="([^"]+)"')
-          css_re = re.compile(r'url\("([^"]+)"\)')
-
-          def check_ref(base: pathlib.Path, ref: str):
-              if ref.startswith(("http://", "https://", "mailto:", "data:")):
-                  return
-              ref = ref.split("?", 1)[0]
-              p = (base / ref).resolve()
-              if not p.exists():
-                  missing.append(f"{base}: {ref}")
-
-          for html in html_files:
-              text = html.read_text(encoding="utf-8")
-              for ref in attr_re.findall(text):
-                  check_ref(html.parent, ref)
-
-          css_text = css_file.read_text(encoding="utf-8")
-          for ref in css_re.findall(css_text):
-              check_ref(css_file.parent, ref)
-
-          manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
-          for icon in manifest.get("icons", []):
-              src = icon.get("src")
-              if src:
-                  check_ref(manifest_file.parent, src)
-
-          if missing:
-              raise SystemExit("Missing references:\n" + "\n".join(missing))
-          PY
+      - name: Run production gate
+        run: ./scripts/prod-gate.sh

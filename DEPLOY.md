@@ -1,23 +1,28 @@
-# SFTP Deploy
+# Production Deploy
 
-Deploy target is the **contents of `public/`**.
+Deploy target is the contents of `public/`.
 
-## One-Time Setup
+## Production Gate
 
-1. Create `.env.local` in the repo root.
-2. Fill in these values in `.env.local`:
-   - `SFTP_HOST`
-   - `SFTP_PORT`
-   - `SFTP_USER`
-   - `SFTP_REMOTE_DIR`
-   - either `SFTP_PASSWORD` or `SFTP_KEY_PATH`
-3. Install `lftp`.
-   - macOS with Homebrew: `brew install lftp`
+Before any production deploy, run the local production gate:
 
-`.env.local` is ignored by Git. Keep real credentials there, not in tracked files.
-Prefer `SFTP_KEY_PATH` over `SFTP_PASSWORD` if your host supports SSH keys.
+```bash
+./scripts/prod-gate.sh
+```
 
-Example `.env.local`:
+It blocks deploys when any of these checks fail:
+
+1. Deploy-relevant git state is dirty (`public/`, `scripts/`, `deploy.sh`, `.github/workflows/`).
+2. Required production files are missing or local asset references are broken.
+3. Potential secrets, credentials, debug/dev markers, or unsafe deploy artifacts are present.
+4. Supported dependency audits report `high` or `critical` vulnerabilities.
+5. Local smoke tests fail against a temporary preview server for `public/`.
+
+Current safeguard intentionally skipped: a registry-backed dependency vulnerability scan is not applicable right now because this repo has no tracked application dependency lockfile. The gate detects that and reports it explicitly. If a supported lockfile is added later, the audit becomes blocking automatically.
+
+## Local Setup
+
+Create `.env.local` in the repo root:
 
 ```bash
 SFTP_HOST=example.com
@@ -25,117 +30,70 @@ SFTP_PORT=22
 SFTP_USER=your-sftp-username
 SFTP_REMOTE_DIR=/public_html/landingpage
 SFTP_PASSWORD=your-sftp-password
+# Or use this instead of SFTP_PASSWORD:
 # SFTP_KEY_PATH=/Users/your-user/.ssh/your-host-key
 ```
 
-The remote directory from your FileZilla screenshot is:
+Install `lftp` locally:
 
 ```bash
-SFTP_REMOTE_DIR=/public_html/landingpage
+brew install lftp
 ```
 
-## Deploy
+Keep credentials only in `.env.local` or your shell environment. Do not put deploy secrets in GitHub for this repo.
 
-Run:
+## Local Deploy Flow
+
+Run the gate and deploy:
+
+```bash
+./scripts/prod-gate.sh
+./deploy.sh
+```
+
+`./deploy.sh` also runs the production gate by default, so this shorter form is enough:
 
 ```bash
 ./deploy.sh
 ```
 
-The script:
-
-1. Loads `.env.local` automatically if present.
-2. Verifies the required SFTP variables exist.
-3. Connects over SFTP only.
-4. Uploads the contents of `public/` to the configured remote directory.
-5. Deletes remote files that no longer exist locally.
-
-The repository stays safe because:
-
-1. `.env.local` is ignored by Git.
-2. No credentials are written into tracked files.
-3. Transport is SFTP, not plain FTP.
-
-If you use an SSH key, keep the key outside the repository, for example in `~/.ssh/`.
-
-## First-Time Local Setup
-
-Create this file:
-
-- [`.env.local`](/Users/mwieland/dev/landingpage-mwieland/.env.local)
-
-Place it in the repo root, next to:
-
-- [`deploy.sh`](/Users/mwieland/dev/landingpage-mwieland/deploy.sh)
-
-Then paste your real SFTP values there.
-
-Password-based example:
+Optional overrides:
 
 ```bash
-SFTP_HOST=example.com
-SFTP_PORT=22
-SFTP_USER=your-sftp-username
-SFTP_REMOTE_DIR=/public_html/landingpage
-SFTP_PASSWORD=your-sftp-password
-```
-
-SSH-key example:
-
-```bash
-SFTP_HOST=example.com
-SFTP_PORT=22
-SFTP_USER=your-sftp-username
-SFTP_REMOTE_DIR=/public_html/landingpage
-SFTP_KEY_PATH=/Users/your-user/.ssh/your-host-key
-```
-
-## Manual Fallback
-
-If you need to upload manually, connect with SFTP and upload everything inside `public/` to the same remote directory.
-
-Upload these paths:
-
-- `public/index.html`
-- `public/legal-notice.html`
-- `public/legal-notice/`
-- `public/site.webmanifest`
-- `public/robots.txt`
-- `public/sitemap.xml`
-- `public/favicon.ico`
-- `public/css/`
-- `public/images/`
-
-Do not upload:
-
-- `archive/`
-- `work/`
-- `.github/`
-- project docs (`DEPLOY.md`, `README*`, etc.)
-
-## Post-Deploy Verification
-
-Open and hard-refresh these URLs:
-
-1. `https://mwieland.com/`
-2. `https://mwieland.com/legal-notice.html`
-3. `https://mwieland.com/site.webmanifest`
-4. `https://mwieland.com/images/avatar-320.jpg`
-5. `https://mwieland.com/images/favicon-32x32.png`
-6. `https://mwieland.com/robots.txt`
-7. `https://mwieland.com/sitemap.xml`
-8. `https://mwieland.com/legal-notice/`
-
-Check:
-
-1. Hero page renders correctly and language switching works.
-2. Social icons open the expected links.
-3. Avatar loads and is sharp.
-4. Favicon appears in the browser tab.
-5. Legal page link works from the homepage.
-
-You can also point it at a different env file:
-
-```bash
+SITE_URL=https://mwieland.com ./deploy.sh
+PREVIEW_SITE_URL=https://preview.example.com ./deploy.sh
+RUN_POST_DEPLOY_HEALTHCHECK=0 ./deploy.sh
 ENV_FILE=/path/to/custom.env ./deploy.sh
 ```
+
+If `PREVIEW_SITE_URL` is set, deploy will first verify that preview/staging URL before touching production. If you do not have a preview environment, that step is skipped.
+
+## CI
+
+GitHub Actions is now validation-only. The workflow in [.github/workflows/validate-public.yml](/Users/mwieland/dev/landingpage-mwieland/.github/workflows/validate-public.yml#L1) runs `./scripts/prod-gate.sh` on push and pull request, but it does not deploy and does not require secrets.
+
+## Post-Deploy Health Check
+
+After upload, `./deploy.sh` verifies:
+
+1. `/`
+2. `/legal-notice.html`
+3. `/site.webmanifest`
+4. `/robots.txt`
+5. `/sitemap.xml`
+6. `/images/avatar-320.jpg`
+7. `/images/favicon-32x32.png`
+
+The deploy fails hard if any of those checks fail.
+
+## Rollback Guidance
+
+This deploy is a mirror upload with delete enabled. Roll back by redeploying the last known-good commit locally:
+
+```bash
+git checkout <known-good-commit>
+./scripts/prod-gate.sh
+./deploy.sh
+```
+
+If you need to keep working on current changes, do the rollback from a temporary branch instead of your main working tree.
