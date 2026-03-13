@@ -4,15 +4,27 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-PORT="${SMOKE_TEST_PORT:-8123}"
-BASE_URL="http://127.0.0.1:${PORT}"
-
 if [[ ! -d "$PUBLIC_DIR" ]]; then
   die "Missing public directory: $PUBLIC_DIR"
 fi
 
 require_command python3
 require_command curl
+
+if [[ -n "${SMOKE_TEST_PORT:-}" ]]; then
+  PORT="$SMOKE_TEST_PORT"
+else
+  PORT="$(python3 - <<'PY'
+import socket
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    sock.bind(("127.0.0.1", 0))
+    print(sock.getsockname()[1])
+PY
+)"
+fi
+
+BASE_URL="http://127.0.0.1:${PORT}"
 
 server_log="$(mktemp)"
 python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$PUBLIC_DIR" >"$server_log" 2>&1 &
