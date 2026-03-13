@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
 cd "$ROOT_DIR"
 
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -12,9 +13,14 @@ fi
 
 paths=(
   public
+  private
   deploy.sh
   scripts
+  docs
   .github/workflows
+  AGENTS.md
+  DEPLOY.md
+  .env.example
 )
 
 status_output="$(git status --porcelain --untracked-files=normal -- "${paths[@]}")"

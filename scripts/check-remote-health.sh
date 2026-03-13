@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
 site_url="${1:-${SITE_URL:-}}"
 if [[ -z "$site_url" ]]; then
-  echo "Usage: $0 <site-url>" >&2
-  exit 1
+  die "Usage: $0 <site-url>"
 fi
 
 site_url="${site_url%/}"

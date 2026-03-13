@@ -2,17 +2,24 @@
 
 Deploy target is the contents of `public/`.
 
-## Production Gate
+## Validation Flow
 
-Before any production deploy, run the local production gate:
+Before any production deploy, the local validation flow is:
 
 ```bash
 ./scripts/prod-gate.sh
+./scripts/predeploy-guard.sh
 ```
 
-It blocks deploys when any of these checks fail:
+`./deploy.sh` runs the same sequence automatically before upload, so the shorter deploy command remains:
 
-1. Deploy-relevant git state is dirty (`public/`, `scripts/`, `deploy.sh`, `.github/workflows/`).
+```bash
+./deploy.sh
+```
+
+The predeploy guard blocks deploys when any of these checks fail:
+
+1. Deploy-relevant git state is dirty.
 2. Required production files are missing or local asset references are broken.
 3. Potential secrets, credentials, debug/dev markers, or unsafe deploy artifacts are present.
 4. Supported dependency audits report `high` or `critical` vulnerabilities.
@@ -25,14 +32,10 @@ Current safeguard intentionally skipped: a registry-backed dependency vulnerabil
 Create `.env.local` in the repo root:
 
 ```bash
-SFTP_HOST=example.com
-SFTP_PORT=22
-SFTP_USER=your-sftp-username
-SFTP_REMOTE_DIR=/public_html/landingpage
-SFTP_PASSWORD=your-sftp-password
-# Or use this instead of SFTP_PASSWORD:
-# SFTP_KEY_PATH=/Users/your-user/.ssh/your-host-key
+cp .env.example .env.local
 ```
+
+Then fill in real values in `.env.local`.
 
 Install `lftp` locally:
 
@@ -44,16 +47,11 @@ Keep credentials only in `.env.local` or your shell environment. Do not put depl
 
 ## Local Deploy Flow
 
-Run the gate and deploy:
+Run validation and deploy:
 
 ```bash
 ./scripts/prod-gate.sh
-./deploy.sh
-```
-
-`./deploy.sh` also runs the production gate by default, so this shorter form is enough:
-
-```bash
+./scripts/predeploy-guard.sh
 ./deploy.sh
 ```
 
@@ -70,7 +68,7 @@ If `PREVIEW_SITE_URL` is set, deploy will first verify that preview/staging URL 
 
 ## CI
 
-GitHub Actions is now validation-only. The workflow in [.github/workflows/validate-public.yml](/Users/mwieland/dev/landingpage-mwieland/.github/workflows/validate-public.yml#L1) runs `./scripts/prod-gate.sh` on push and pull request, but it does not deploy and does not require secrets.
+GitHub Actions is validation-only. The workflow in [.github/workflows/site-checks.yml](/Users/mwieland/dev/landingpage-mwieland/.github/workflows/site-checks.yml#L1) runs `./scripts/prod-gate.sh` on push and pull request, but it does not deploy and does not require secrets.
 
 ## Post-Deploy Health Check
 

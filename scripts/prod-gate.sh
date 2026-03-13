@@ -2,11 +2,16 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-"$ROOT_DIR/scripts/check-clean-tree.sh"
-python3 "$ROOT_DIR/scripts/check-public-security.py"
-"$ROOT_DIR/scripts/check-dependency-vulns.sh"
-"$ROOT_DIR/scripts/run-smoke-tests.sh"
+if [[ ! -d "$PUBLIC_DIR" ]]; then
+  die "Missing public directory: $PUBLIC_DIR"
+fi
+
+require_command git
+require_command python3
+require_command curl
+
+"$ROOT_DIR/scripts/predeploy-guard.sh" --check
 
 echo "Production gate passed."

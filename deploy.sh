@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PUBLIC_DIR="$ROOT_DIR/public"
-ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.local}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/scripts" && pwd)/common.sh"
+
+ENV_FILE="${ENV_FILE:-$ENV_FILE_DEFAULT}"
 GATE_SCRIPT="$ROOT_DIR/scripts/prod-gate.sh"
+PREDEPLOY_GUARD_SCRIPT="$ROOT_DIR/scripts/predeploy-guard.sh"
 HEALTHCHECK_SCRIPT="$ROOT_DIR/scripts/check-remote-health.sh"
 SITE_URL="${SITE_URL:-https://mwieland.com}"
 PREVIEW_SITE_URL="${PREVIEW_SITE_URL:-}"
@@ -13,24 +14,22 @@ RUN_PROD_GATE="${RUN_PROD_GATE:-1}"
 RUN_POST_DEPLOY_HEALTHCHECK="${RUN_POST_DEPLOY_HEALTHCHECK:-1}"
 
 if [[ ! -d "$PUBLIC_DIR" ]]; then
-  echo "Missing public/ directory at $PUBLIC_DIR" >&2
-  exit 1
+  die "Missing public/ directory at $PUBLIC_DIR"
 fi
 
 if [[ "$RUN_PROD_GATE" == "1" ]]; then
   if [[ ! -x "$GATE_SCRIPT" ]]; then
-    echo "Missing executable production gate script at $GATE_SCRIPT" >&2
-    exit 1
+    die "Missing executable production gate script at $GATE_SCRIPT"
   fi
   "$GATE_SCRIPT"
 fi
 
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "$ENV_FILE"
-  set +a
+if [[ ! -x "$PREDEPLOY_GUARD_SCRIPT" ]]; then
+  die "Missing executable predeploy guard script at $PREDEPLOY_GUARD_SCRIPT"
 fi
+
+"$PREDEPLOY_GUARD_SCRIPT"
+load_env_file "$ENV_FILE"
 
 required_vars=(SFTP_HOST SFTP_USER SFTP_REMOTE_DIR)
 missing_vars=()
@@ -76,10 +75,7 @@ if [[ -n "$SFTP_KEY_PATH" && ! -f "$SFTP_KEY_PATH" ]]; then
   exit 1
 fi
 
-if ! command -v lftp >/dev/null 2>&1; then
-  echo "lftp is not installed. Install it first, for example on macOS: brew install lftp" >&2
-  exit 1
-fi
+require_command lftp "Install it first, for example on macOS: brew install lftp"
 
 if [[ -n "$PREVIEW_SITE_URL" ]]; then
   "$HEALTHCHECK_SCRIPT" "$PREVIEW_SITE_URL"

@@ -4,6 +4,8 @@ Static personal website for [mwieland.com](https://mwieland.com/).
 
 This repository contains the source for a lightweight multilingual landing page focused on a clear personal profile, direct contact links, and fast static delivery.
 
+Deployable content lives in `public/`. Local-only deploy secrets belong in `.env.local`, with placeholders documented in `.env.example`.
+
 ## What It Includes
 
 - Responsive single-page layout for desktop and mobile
