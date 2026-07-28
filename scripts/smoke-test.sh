@@ -80,7 +80,7 @@ assert_public_lacks() {
 
 assert_contains "$BASE_URL/" "<title>Matthias Wieland</title>"
 assert_contains "$BASE_URL/" "hreflang=\"x-default\""
-assert_contains "$BASE_URL/" "href=\"/de/\""
+assert_contains "$BASE_URL/" "href=\"de/index.html\""
 assert_contains "$BASE_URL/" "legal-notice.html"
 assert_contains "$BASE_URL/de/" "<html lang=\"de\">"
 assert_contains "$BASE_URL/de/" "Berater für digitale Projekte und Strategien"
