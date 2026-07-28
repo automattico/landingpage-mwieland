@@ -68,14 +68,31 @@ assert_contains() {
 }
 
 assert_contains "$BASE_URL/" "<title>Matthias Wieland</title>"
-assert_contains "$BASE_URL/" "data-lang=\"de\""
+assert_contains "$BASE_URL/" "hreflang=\"x-default\""
+assert_contains "$BASE_URL/" "href=\"/de/\""
 assert_contains "$BASE_URL/" "legal-notice.html"
+assert_contains "$BASE_URL/de/" "<html lang=\"de\">"
+assert_contains "$BASE_URL/de/" "Berater für digitale Projekte und Strategie"
+assert_contains "$BASE_URL/de/" "https://mwieland.com/de/"
+assert_contains "$BASE_URL/es/" "<html lang=\"es\">"
+assert_contains "$BASE_URL/es/" "Consultor de proyectos y estrategia digital"
+assert_contains "$BASE_URL/es/" "https://mwieland.com/es/"
+assert_contains "$BASE_URL/pt/" "<html lang=\"pt\">"
+assert_contains "$BASE_URL/pt/" "Consultor de projetos e estratégia digital"
+assert_contains "$BASE_URL/pt/" "https://mwieland.com/pt/"
 assert_contains "$BASE_URL/legal-notice.html" "Legal & Privacy"
 assert_contains "$BASE_URL/legal-notice/" "Redirecting to"
 assert_contains "$BASE_URL/site.webmanifest" "\"name\": \"Matthias Wieland\""
 assert_contains "$BASE_URL/robots.txt" "Sitemap: https://mwieland.com/sitemap.xml"
+assert_contains "$BASE_URL/robots.txt" "Allow: /"
 assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/</loc>"
+assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/de/</loc>"
+assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/es/</loc>"
+assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/pt/</loc>"
 curl --silent --show-error --fail "$BASE_URL/images/avatar-320.jpg" >/dev/null
 curl --silent --show-error --fail "$BASE_URL/images/favicon-32x32.png" >/dev/null
+curl --silent --show-error --fail "$BASE_URL/de/" >/dev/null
+curl --silent --show-error --fail "$BASE_URL/es/" >/dev/null
+curl --silent --show-error --fail "$BASE_URL/pt/" >/dev/null
 
 echo "Local smoke tests passed."

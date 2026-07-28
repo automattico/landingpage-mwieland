@@ -118,24 +118,23 @@
       user-select: none;
     }
 
-    .lang button{
-      appearance: none;
+    .lang a{
       border: 1px solid rgba(31, 41, 55, 0.25);
       background: rgba(255, 255, 255, 0.34);
       color: var(--muted);
       border-radius: 999px;
       padding: 8px 10px;
       font-size: 12px;
-      cursor: pointer;
+      text-decoration: none;
     }
 
-    .lang button:hover{
+    .lang a:hover{
       background: rgba(255, 255, 255, 0.52);
       border-color: rgba(31, 41, 55, 0.32);
       transform: translateY(-1px);
     }
 
-    .lang button[aria-pressed="true"]{
+    .lang a[aria-current="page"]{
       background: rgba(255, 255, 255, 0.66);
       color: rgba(17, 24, 39, 0.96);
       border-color: rgba(0, 130, 201, 0.55);
