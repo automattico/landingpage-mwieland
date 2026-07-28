@@ -12,6 +12,7 @@ SITE_URL="${SITE_URL:-https://mwieland.com}"
 PREVIEW_SITE_URL="${PREVIEW_SITE_URL:-}"
 RUN_PROD_GATE="${RUN_PROD_GATE:-1}"
 RUN_POST_DEPLOY_HEALTHCHECK="${RUN_POST_DEPLOY_HEALTHCHECK:-1}"
+RUN_CLOUDFLARE_PURGE="${RUN_CLOUDFLARE_PURGE:-1}"
 
 if [[ ! -d "$PUBLIC_DIR" ]]; then
   die "Missing public/ directory at $PUBLIC_DIR"
@@ -101,6 +102,31 @@ $LFTP_OPEN_COMMAND
 mirror --reverse --delete --verbose "$LFTP_SOURCE_DIR" "$LFTP_TARGET_DIR"
 bye
 EOF
+
+if [[ "$RUN_CLOUDFLARE_PURGE" == "1" ]]; then
+  if [[ -n "${CLOUDFLARE_ZONE_ID:-}" || -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+    if [[ -z "${CLOUDFLARE_ZONE_ID:-}" || -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+      die "Set both CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN to enable Cloudflare cache purging."
+    fi
+
+    require_command curl
+
+    echo "Purging Cloudflare cache for zone $CLOUDFLARE_ZONE_ID"
+    purge_response="$(
+      curl --silent --show-error --fail \
+        --request POST \
+        --url "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
+        --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data '{"purge_everything":true}'
+    )"
+
+    if [[ "$purge_response" != *'"success":true'* ]]; then
+      echo "Cloudflare purge failed: $purge_response" >&2
+      exit 1
+    fi
+  fi
+fi
 
 if [[ "$RUN_POST_DEPLOY_HEALTHCHECK" == "1" ]]; then
   "$HEALTHCHECK_SCRIPT" "$SITE_URL"

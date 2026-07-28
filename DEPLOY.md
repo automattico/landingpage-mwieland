@@ -66,6 +66,26 @@ ENV_FILE=/path/to/custom.env ./deploy.sh
 
 If `PREVIEW_SITE_URL` is set, deploy will first verify that preview/staging URL before touching production. If you do not have a preview environment, that step is skipped.
 
+## Cloudflare
+
+If the public domain is proxied through Cloudflare, deploy can purge Cloudflare's cache after a successful upload and before remote health checks.
+
+Add these to `.env.local`:
+
+```bash
+CLOUDFLARE_ZONE_ID=your-zone-id
+CLOUDFLARE_API_TOKEN=your-api-token
+RUN_CLOUDFLARE_PURGE=1
+```
+
+Use a token scoped only to the target zone with cache purge permission. If you want to skip purging temporarily:
+
+```bash
+RUN_CLOUDFLARE_PURGE=0 ./deploy.sh
+```
+
+Cloudflare does not change the SFTP upload target or deploy mechanics here. The origin still receives files over SFTP, while Cloudflare sits in front of HTTP traffic for DNS, TLS, caching, and CDN behavior.
+
 ## CI
 
 GitHub Actions is validation-only. The workflow in [.github/workflows/site-checks.yml](/Users/mwieland/dev/landingpage-mwieland/.github/workflows/site-checks.yml#L1) runs `./scripts/prod-gate.sh` on push and pull request, but it does not deploy and does not require secrets.
