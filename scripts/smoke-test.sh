@@ -10,7 +10,7 @@ fi
 
 require_command python3
 require_command curl
-require_command rg
+require_command grep
 
 if [[ -n "${SMOKE_TEST_PORT:-}" ]]; then
   PORT="$SMOKE_TEST_PORT"
@@ -71,7 +71,8 @@ assert_contains() {
 assert_public_lacks() {
   local pattern="$1"
 
-  if rg --line-number --ignore-case --glob '*.html' --glob '*.js' --glob '*.json' "$pattern" "$PUBLIC_DIR"; then
+  if grep --recursive --line-number --ignore-case --extended-regexp \
+    --include='*.html' --include='*.js' --include='*.json' "$pattern" "$PUBLIC_DIR"; then
     echo "Static privacy check failed: found forbidden pattern $pattern" >&2
     exit 1
   fi
@@ -82,13 +83,13 @@ assert_contains "$BASE_URL/" "hreflang=\"x-default\""
 assert_contains "$BASE_URL/" "href=\"/de/\""
 assert_contains "$BASE_URL/" "legal-notice.html"
 assert_contains "$BASE_URL/de/" "<html lang=\"de\">"
-assert_contains "$BASE_URL/de/" "Berater für digitale Projekte und Strategie"
+assert_contains "$BASE_URL/de/" "Berater für digitale Projekte und Strategien"
 assert_contains "$BASE_URL/de/" "https://mwieland.com/de/"
 assert_contains "$BASE_URL/es/" "<html lang=\"es\">"
-assert_contains "$BASE_URL/es/" "Consultor de proyectos y estrategia digital"
+assert_contains "$BASE_URL/es/" "Consultor de proyectos y estrategias digitales"
 assert_contains "$BASE_URL/es/" "https://mwieland.com/es/"
 assert_contains "$BASE_URL/pt/" "<html lang=\"pt\">"
-assert_contains "$BASE_URL/pt/" "Consultor de projetos e estratégia digital"
+assert_contains "$BASE_URL/pt/" "Consultor de projetos e estratégias digitais"
 assert_contains "$BASE_URL/pt/" "https://mwieland.com/pt/"
 assert_contains "$BASE_URL/legal-notice.html" "Legal & Privacy"
 assert_contains "$BASE_URL/legal-notice.html" "Beethovenstra&szlig;e 23"
