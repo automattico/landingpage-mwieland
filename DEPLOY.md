@@ -99,7 +99,7 @@ After upload, `./deploy.sh` verifies:
 3. `/site.webmanifest`
 4. `/robots.txt`
 5. `/sitemap.xml`
-6. `/images/avatar-320.jpg`
+6. `/images/avatar-2022.jpg`
 7. `/images/favicon-32x32.png`
 
 The deploy fails hard if any of those checks fail.

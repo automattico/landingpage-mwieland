@@ -17,7 +17,7 @@ REQUIRED_FILES = [
     PUBLIC / "site.webmanifest",
     PUBLIC / "css" / "styles.css",
     PUBLIC / "images" / "bg2022.jpg",
-    PUBLIC / "images" / "avatar-320.jpg",
+    PUBLIC / "images" / "avatar-2022.jpg",
     PUBLIC / "images" / "favicon-32x32.png",
 ]
 HTML_FILES = [

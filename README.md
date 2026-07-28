@@ -16,10 +16,3 @@ Deployable content lives in `public/`. Local-only deploy secrets belong in `.env
 ## Live Site
 
 [mwieland.com](https://mwieland.com/)
-
-## Screenshots
-
-<p>
-  <img src="./docs/images/homepage-desktop.png" alt="Desktop screenshot of mwieland.com" width="520">
-  <img src="./docs/images/homepage-mobile.png" alt="Mobile screenshot of mwieland.com" width="220">
-</p>

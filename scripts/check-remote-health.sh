@@ -28,7 +28,7 @@ assert_contains "$site_url/legal-notice.html" "Legal & Privacy"
 assert_contains "$site_url/site.webmanifest" "\"name\": \"Matthias Wieland\""
 assert_contains "$site_url/robots.txt" "Sitemap:"
 assert_contains "$site_url/sitemap.xml" "<urlset"
-curl --silent --show-error --fail --location "$site_url/images/avatar-320.jpg" >/dev/null
+curl --silent --show-error --fail --location "$site_url/images/avatar-2022.jpg" >/dev/null
 curl --silent --show-error --fail --location "$site_url/images/favicon-32x32.png" >/dev/null
 
 echo "Remote health checks passed for $site_url."

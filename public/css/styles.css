@@ -184,13 +184,6 @@
       fill: rgba(17, 24, 39, 0.88);
     }
 
-    footer{
-      margin-top: 12px;
-      text-align: center;
-      color: var(--muted2);
-      font-size: 12px;
-    }
-
     .legalbar{
       position: fixed;
       left: 14px;

@@ -105,7 +105,7 @@ assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/</loc>"
 assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/de/</loc>"
 assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/es/</loc>"
 assert_contains "$BASE_URL/sitemap.xml" "<loc>https://mwieland.com/pt/</loc>"
-curl --silent --show-error --fail "$BASE_URL/images/avatar-320.jpg" >/dev/null
+curl --silent --show-error --fail "$BASE_URL/images/avatar-2022.jpg" >/dev/null
 curl --silent --show-error --fail "$BASE_URL/images/favicon-32x32.png" >/dev/null
 curl --silent --show-error --fail "$BASE_URL/de/" >/dev/null
 curl --silent --show-error --fail "$BASE_URL/es/" >/dev/null
