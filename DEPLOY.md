@@ -43,7 +43,16 @@ Install `lftp` locally:
 brew install lftp
 ```
 
-Keep credentials only in `.env.local` or your shell environment. Do not put deploy secrets in GitHub for this repo.
+Deploy auth is **SSH key only**; `deploy.sh` refuses to run if `SFTP_PASSWORD` is set.
+
+- `SFTP_KEY_PATH` points at the **public** key (`~/.ssh/id_ed25519_hetzner.pub`). With `IdentitiesOnly`
+  the private half is taken from the SSH agent — the Bitwarden desktop app's SSH agent, which must be
+  running and unlocked and asks for approval per connection.
+- `SFTP_IDENTITY_AGENT` (optional) names the agent socket for shells that do not export `SSH_AUTH_SOCK`.
+- `deploy/known_hosts` pins the Hetzner host keys; any other host key aborts the deploy. Public host
+  keys are not secrets and are committed on purpose.
+
+Keep `.env.local` out of Git. Do not put deploy secrets in GitHub for this repo.
 
 ## Local Deploy Flow
 

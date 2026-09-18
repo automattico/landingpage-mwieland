@@ -47,33 +47,27 @@ if (( ${#missing_vars[@]} > 0 )); then
 fi
 
 SFTP_PORT="${SFTP_PORT:-22}"
-SFTP_PASSWORD="${SFTP_PASSWORD:-}"
 SFTP_KEY_PATH="${SFTP_KEY_PATH:-}"
-SFTP_KEY="${SFTP_KEY:-}"
-temp_key_file=""
+SFTP_KNOWN_HOSTS="${SFTP_KNOWN_HOSTS:-deploy/known_hosts}"
+SFTP_IDENTITY_AGENT="${SFTP_IDENTITY_AGENT:-}"
+[[ "$SFTP_KNOWN_HOSTS" == /* ]] || SFTP_KNOWN_HOSTS="$ROOT_DIR/$SFTP_KNOWN_HOSTS"
+[[ -z "$SFTP_KEY_PATH" || "$SFTP_KEY_PATH" == /* ]] || SFTP_KEY_PATH="$ROOT_DIR/$SFTP_KEY_PATH"
 
-cleanup() {
-  if [[ -n "$temp_key_file" && -f "$temp_key_file" ]]; then
-    rm -f "$temp_key_file"
-  fi
-}
-trap cleanup EXIT
-
-if [[ -n "$SFTP_KEY" && -z "$SFTP_KEY_PATH" ]]; then
-  temp_key_file="$(mktemp)"
-  chmod 600 "$temp_key_file"
-  printf '%s\n' "$SFTP_KEY" > "$temp_key_file"
-  SFTP_KEY_PATH="$temp_key_file"
+# SSH key auth only. SFTP_KEY_PATH may point at the public key: with IdentitiesOnly
+# the private half is taken from the SSH agent (Bitwarden desktop app).
+if [[ -n "${SFTP_PASSWORD:-}" ]]; then
+  die "SFTP_PASSWORD is set — this deploy uses SSH key auth only; remove it from $ENV_FILE."
 fi
-
-if [[ -z "$SFTP_PASSWORD" && -z "$SFTP_KEY_PATH" ]]; then
-  echo "Set either SFTP_PASSWORD, SFTP_KEY, or SFTP_KEY_PATH in $ENV_FILE." >&2
-  exit 1
+if [[ -z "$SFTP_KEY_PATH" ]]; then
+  die "Set SFTP_KEY_PATH in $ENV_FILE (see .env.example)."
 fi
-
-if [[ -n "$SFTP_KEY_PATH" && ! -f "$SFTP_KEY_PATH" ]]; then
-  echo "SFTP_KEY_PATH does not exist: $SFTP_KEY_PATH" >&2
-  exit 1
+if [[ ! -f "$SFTP_KEY_PATH" ]]; then
+  die "SFTP_KEY_PATH does not exist: $SFTP_KEY_PATH"
+fi
+if ! grep -q '^[^#[:space:]]' "$SFTP_KNOWN_HOSTS" 2>/dev/null; then
+  die "No host key pinned in $SFTP_KNOWN_HOSTS — run:
+  ssh-keyscan -p $SFTP_PORT $SFTP_HOST >> deploy/known_hosts
+  ssh-keygen -lf deploy/known_hosts   # compare with the konsoleH fingerprint"
 fi
 
 require_command lftp "Install it first, for example on macOS: brew install lftp"
@@ -86,19 +80,18 @@ echo "Deploying $PUBLIC_DIR to sftp://$SFTP_HOST:$SFTP_PORT$SFTP_REMOTE_DIR"
 
 LFTP_SOURCE_DIR="${PUBLIC_DIR%/}/"
 LFTP_TARGET_DIR="${SFTP_REMOTE_DIR%/}/"
-LFTP_OPEN_COMMAND="open -u \"$SFTP_USER\",\"$SFTP_PASSWORD\" \"sftp://$SFTP_HOST:$SFTP_PORT\""
-
-if [[ -n "$SFTP_KEY_PATH" ]]; then
-  escaped_key_path=${SFTP_KEY_PATH//\"/\\\"}
-  LFTP_OPEN_COMMAND="set sftp:connect-program \"ssh -a -x -i \\\"$escaped_key_path\\\"\""$'\n'"open -u \"$SFTP_USER\" \"sftp://$SFTP_HOST:$SFTP_PORT\""
+# -l passes the user because lftp does not hand it to the connect-program itself.
+SSH_CONNECT="ssh -a -x -l $SFTP_USER -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$SFTP_KNOWN_HOSTS -o IdentitiesOnly=yes -i $SFTP_KEY_PATH"
+if [[ -n "$SFTP_IDENTITY_AGENT" ]]; then
+  SSH_CONNECT+=" -o IdentityAgent=$SFTP_IDENTITY_AGENT"
 fi
 
 lftp <<EOF
 set cmd:fail-exit true
 set xfer:clobber true
-set sftp:auto-confirm yes
 set mirror:exclude-regex "(^|/)\\.DS_Store$"
-$LFTP_OPEN_COMMAND
+set sftp:connect-program "$SSH_CONNECT"
+open "sftp://$SFTP_USER@$SFTP_HOST:$SFTP_PORT"
 mirror --reverse --delete --verbose "$LFTP_SOURCE_DIR" "$LFTP_TARGET_DIR"
 bye
 EOF
