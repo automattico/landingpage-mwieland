@@ -1,0 +1,18 @@
+id: landingpage-mwieland
+name: mwieland Website
+kind: project
+scope:
+  - personal
+type: website
+lifecycle: live
+activity: active
+summary: Lightweight multilingual personal profile website for mwieland.com.
+description: >
+  Delivers a fast, responsive personal profile and contact landing page for
+  mwieland.com. The static site supports English, German, Spanish and Portuguese while
+  remaining deliberately simple to deploy and maintain.
+repo: https://github.com/automattico/landingpage-mwieland
+docs: README.md
+stack:
+  - HTML
+  - CSS
